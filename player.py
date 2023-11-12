@@ -68,12 +68,17 @@ class PlayerControllerMinimax(PlayerController):
         # NOTE: Don't forget to initialize the children of the current node
         #       with its compute_and_get_children() method!
 
-        depth: int = 5
-        best_value, best_move = self.minimax(initial_tree_node, True, depth)
+        depth: int = 6
+        alpha: float = float('-inf')
+        beta: float = float('inf')
+
+        best_value, best_move = self.minimax(initial_tree_node, True, depth,
+                                             alpha, beta)
 
         return ACTION_TO_STR[best_move]
 
-    def minimax(self, node: Node, player: bool, depth: int) -> Tuple[float, int]:
+    def minimax(self, node: Node, player: bool, depth: int,
+                alpha: float, beta: float) -> Tuple[float, int]:
         """
         node contains state
         player = True/False (max/min)
@@ -88,18 +93,30 @@ class PlayerControllerMinimax(PlayerController):
             return self.heuristic(node), best_move
 
         if player:
+            # look for max value
             for child in children:
-                tmp_value, tmp_move = self.minimax(child, not player, depth-1)
+                tmp_value, tmp_move = self.minimax(child, not player, depth-1,
+                                                   alpha, beta)
                 if tmp_value > best_value:  # cant do max cus we need the move
                     best_value = tmp_value
                     best_move = child.move
-                # best_value = max(best_value, tmp_value)
+
+                # prune if possible
+                alpha = max(alpha, best_value)
+                if beta <= alpha:
+                    break
         else:
             for child in children:
-                tmp_value, tmp_move = self.minimax(child, not player, depth-1)
+                tmp_value, tmp_move = self.minimax(child, not player, depth-1,
+                                                   alpha, beta)
                 if tmp_value < best_value:  # cant do min cus we need the move
                     best_value = tmp_value
                     best_move = child.move
+
+                # prune if possible
+                beta = min(beta, best_value)
+                if beta <= alpha:
+                    break
 
         return best_value, best_move
 
