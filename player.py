@@ -68,29 +68,29 @@ class PlayerControllerMinimax(PlayerController):
         # NOTE: Don't forget to initialize the children of the current node
         #       with its compute_and_get_children() method!
 
-        depth: int = 6
-        alpha: float = float('-inf')
-        beta: float = float('inf')
+        depth: int = 4
 
-        best_value, best_move = self.minimax(initial_tree_node, True, depth,
-                                             alpha, beta)
+        best_value, best_move = self.minimax(initial_tree_node, True, depth)
 
         return ACTION_TO_STR[best_move]
 
     def minimax(self, node: Node, player: bool, depth: int,
-                alpha: float, beta: float) -> Tuple[float, int]:
+                alpha: float = float('-inf'), beta: float = float('inf')) -> Tuple[float, int]:
         """
         node contains state
         player = True/False (max/min)
         returns value
         """
 
+        if depth == 0:  # or no fish positions
+            return self.heuristic(node), 0
+
         children: List[Node] = node.compute_and_get_children()
+        # Move ordering based on heuristic score
+        children.sort(reverse=True, key=lambda x: self.heuristic(x))
+
         best_value: float = float('-inf') if player else float('inf')
         best_move: int = 0
-
-        if depth == 0:  # or no fish positions
-            return self.heuristic(node), best_move
 
         if player:
             # look for max value
