@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from typing import List, Tuple, Optional
+import time
 
 import random
 import math
@@ -69,8 +70,12 @@ class PlayerControllerMinimax(PlayerController):
         #       with its compute_and_get_children() method!
 
         depth: int = 4
+        self.end_condition: float = time.time() + 65*1e-3
 
-        best_value, best_move = self.minimax(initial_tree_node, True, depth)
+        # iterative deepening search
+        while not self.cutoff_test(depth):
+            best_value, best_move = self.minimax(initial_tree_node, True, depth)
+            depth += 1
 
         return ACTION_TO_STR[best_move]
 
@@ -82,7 +87,7 @@ class PlayerControllerMinimax(PlayerController):
         returns value
         """
 
-        if depth == 0:  # or no fish positions
+        if self.cutoff_test(depth):
             return self.heuristic(node), 0
 
         children: List[Node] = node.compute_and_get_children()
@@ -106,6 +111,7 @@ class PlayerControllerMinimax(PlayerController):
                 if beta <= alpha:
                     break
         else:
+            # look for min value
             for child in children:
                 tmp_value, tmp_move = self.minimax(child, not player, depth-1,
                                                    alpha, beta)
@@ -161,3 +167,10 @@ class PlayerControllerMinimax(PlayerController):
 
         # Return the final score
         return score + maximum_distance
+
+    def cutoff_test(self, depth: int) -> bool:
+        """
+        return True if cutoff
+        """
+
+        return depth == 0 or time.time() >= self.end_condition
