@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 import time
 
 import random
@@ -71,6 +71,7 @@ class PlayerControllerMinimax(PlayerController):
 
         depth: int = 4
         self.end_condition: float = time.time() + 65*1e-3
+        self.transposition_table: Dict[str, Tuple[float, int]] = {}
 
         # iterative deepening search
         while not self.cutoff_test(depth):
@@ -89,6 +90,10 @@ class PlayerControllerMinimax(PlayerController):
 
         if self.cutoff_test(depth):
             return self.heuristic(node), 0
+
+        key: str = str(node.state.get_fish_positions()) + str(node.state.get_hook_positions()) + str(depth)
+        if key in self.transposition_table:
+            return self.transposition_table[key]
 
         children: List[Node] = node.compute_and_get_children()
         # Move ordering based on heuristic score
@@ -124,6 +129,8 @@ class PlayerControllerMinimax(PlayerController):
                 if beta <= alpha:
                     break
 
+        # add best value and move to transposition table
+        self.transposition_table[key] = (best_value, best_move)
         return best_value, best_move
 
     def heuristic(self, node):
@@ -172,5 +179,4 @@ class PlayerControllerMinimax(PlayerController):
         """
         return True if cutoff
         """
-
         return depth == 0 or time.time() >= self.end_condition
