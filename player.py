@@ -69,15 +69,21 @@ class PlayerControllerMinimax(PlayerController):
         # NOTE: Don't forget to initialize the children of the current node
         #       with its compute_and_get_children() method!
 
-        depth: int = 4
-        self.end_condition: float = time.time() + 65*1e-3
+        depth: int = 7  # higher number means more time to search -> deeper depth
+        self.end_condition: float = time.time() + 70*1e-3
         self.transposition_table: Dict[str, Tuple[float, int]] = {}
 
         # iterative deepening search
         while not self.cutoff_test(depth):
             best_value, best_move = self.minimax(initial_tree_node, True, depth)
             depth += 1
-
+            #  maybe cutoff if depth is too high, or score is too high if good enough.
+            #  1000 not necessary since it is already so restrictive. 10 is enough tbh, or not even needed to be honest
+            #  however it should be - quisence search
+            #  nvm that is not quiscence search, it is not applicable to this assignment
+            #  or maybe i dont knnow
+        #print(best_value)
+        print(depth)
         return ACTION_TO_STR[best_move]
 
     def minimax(self, node: Node, player: bool, depth: int,
@@ -96,8 +102,13 @@ class PlayerControllerMinimax(PlayerController):
             return self.transposition_table[key]
 
         children: List[Node] = node.compute_and_get_children()
+
         # Move ordering based on heuristic score
         children.sort(reverse=True, key=lambda x: self.heuristic(x))
+
+        # Forward pruning with beam search
+        if len(children) == 5:
+            children = children[:3]
 
         best_value: float = float('-inf') if player else float('inf')
         best_move: int = 0
