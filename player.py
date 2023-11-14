@@ -148,43 +148,28 @@ class PlayerControllerMinimax(PlayerController):
         """
         does not need to account for player, it's done in minmax
         returns value
-
-        Parameters:
-        - node (Node): The current game tree node.
-
-        Returns:
-        - float: A value representing the desirability of the game state.
         """
 
         # Get information from current game state
-        green_hook = node.state.get_hook_positions()[0]
-        fish_positions = node.state.get_fish_positions()
-        fish_scores = node.state.fish_scores
-        boat_scores = node.state.get_player_scores()
-        gameboard_size: int = 20
-        maximum_distance: float = 0
+        gameboard_size = 20
+        green_hook, fish_positions, fish_scores, boat_scores = (
+            node.state.get_hook_positions()[0],
+            node.state.get_fish_positions(),
+            node.state.fish_scores,
+            node.state.get_player_scores(),
+        )
 
-
-        # Calculate the difference between the scores of the green and red boat
         score: float = boat_scores[0] - boat_scores[1]
 
-        # Calculate the maximum distance between the hook and the fish
-        # fish[0] is the fish id, fish[1] is the fish position --> fish[1][0] = x coordinate, fish[1][1] = y coordinate
-        for fish in fish_positions.items():
-            x_distance: float = min(abs(green_hook[0] - fish[1][0]), gameboard_size - abs(green_hook[0] - fish[1][0]))
-            y_distance: float = abs(green_hook[1] - fish[1][1])
-            total_distance: float = -1 * (x_distance + y_distance) # Negative -1 because smaller distances are more desirable
+        # Calculate the maximum distance between the hook and the fish using functional programming
+        fish_distances = (fish_scores[fish_id] * math.exp(-1 * (min(abs(green_hook[0] - fish_coord[0]), 
+                        gameboard_size - abs(green_hook[0] - fish_coord[0])) + abs(green_hook[1] - fish_coord[1])))
+            for fish_id, fish_coord in fish_positions.items()
+        )
 
-            # if the hook is on the same position as a fish, return 1000. Otherwise continue
-            if total_distance == 0 and fish_scores[fish[0]] > 0:
-                return 1000
-            
-            # Calculate the maximum distance. Comparing the current max and the new distance
-            # Using math.exp() to emphasize the importance of the smaller distances
-            maximum_distance = max(maximum_distance, fish_scores[fish[0]] * math.exp(total_distance))
+        max_distance = max(fish_distances, default=0)
 
-        # Return the final score
-        return score + maximum_distance
+        return score + max_distance
 
     def cutoff_test(self, depth: int) -> bool:
         """
