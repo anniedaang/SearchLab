@@ -147,11 +147,6 @@ class PlayerControllerMinimax(PlayerController):
 
     def heuristic(self, node):
 
-        """
-        does not need to account for player, it's done in minmax
-        returns value
-        """
-
         # Get information from current game state
         gameboard_size = 20
         green_hook, fish_positions, fish_scores, boat_scores = (
